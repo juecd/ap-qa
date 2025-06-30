@@ -5,15 +5,6 @@ from kernel import Kernel
 from typing import TypedDict, Literal
 from pydantic import BaseModel
 
-# QA set-up
-# Browser Use is pretty slow—I'd recommend running this in batches of 10 websites at a time.
-merchant_websites = [
-    "https://jomalone.com/", # Should be "SUCCESS"
-    "https://shop.lululemon.com/", # Should be "SUCCESS"
-    "https://www.urbanoutfitters.com/", # Should be "SUCCESS"
-    "https://www.levi.com/US/en_US/", # Should be "FAILED" - Levi's doesn't have the Afterpay messaging widget
-]
-
 prompt = """
 Context:
 - You are a QA agent.
@@ -67,26 +58,16 @@ app = kernel.App("afterpay")
 # Separate terminal to watch logs: 
 # kernel logs afterpay --follow
 @app.action("start-qa")
-async def start_qa(ctx: kernel.KernelContext):
+async def start_qa(ctx: kernel.KernelContext, payload):
     kernel_browser = client.browsers.create(invocation_id=ctx.invocation_id, stealth=True)
     print("Kernel browser live view url: ", kernel_browser.browser_live_view_url)
-    results = []
-
-    for merchant_website in merchant_websites:
-        print(f"Running agent for {merchant_website}")
-        result = await run_agent(kernel_browser.cdp_ws_url, merchant_website)
-        appended_result = { "website": merchant_website, **result }
-        results.append(appended_result)
-    # Kernel's return value limit is 64kb, so push this data to S3 or a database if invoking this on long runs
-    return results
-
-
-async def run_agent(cdp_ws_url: str, merchant_website: str):
+    merchant_website = payload["website"]
+    
     agent = Agent(
         #task="Compare the price of gpt-4o and DeepSeek-V3",
         task=f"Merchant website to QA: {merchant_website}" + prompt,
         llm=llm,
-        browser_session=BrowserSession(cdp_url=cdp_ws_url,
+        browser_session=BrowserSession(cdp_url=kernel_browser.cdp_ws_url,
         controller=controller,
         max_steps=20) # Agent should take 20 steps max
     )

@@ -6,7 +6,7 @@ This is a simple Kernel application that implements the Browser Use SDK to QA me
 ```
 export KERNEL_API_KEY=XXX
 kernel deploy main.py -e OPENAI_API_KEY=XXX
-kernel invoke afterpay start-qa
+kernel invoke afterpay start-qa --payload '{"website": "jomalone.com"}'
 # (Or via API request: https://docs.onkernel.com/launch/invoke#invoking-via-api%2Fsdk)
 # Separate terminal to watch logs:
 export KERNEL_API_KEY=XXX
